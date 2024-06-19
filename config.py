@@ -10,4 +10,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 TOKEN: str = os.getenv('TOKEN')
+CLIENT_ID: str = os.getenv('CLIENT_ID')
+
+TOKEN_URL = f'https://oauth.yandex.ru/authorize?response_type=token&client_id={CLIENT_ID}'
 

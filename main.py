@@ -16,14 +16,17 @@
 # pip install -r requirements.txt —  загрузить пакеты из файла
 
 
-# импорты
-import logging  # библиотека логирования (журналирование)
-import asyncio  # библиотека для асинхронного программирования
-from aiogram import Bot, Dispatcher, types
+import asyncio
+import logging
+
+from aiogram import Bot, Dispatcher
+
+from client import YaDiskClient
 from config import TOKEN
-from handlers import register_message_handler
-from handlers import commands_for_bot
 from db import async_create_table
+from handlers import commands_for_bot
+from handlers import register_message_handler
+from global_funcs import notificate_listeners
 
 
 # асинхронный вызов функции - конкурентный вызов с ожиданием события для продолжения процесса выполнения
@@ -42,12 +45,14 @@ async def main():
 
     # передача списка команд боту
     await bot.set_my_commands(commands=commands_for_bot)
+
+    asyncio.create_task(notificate_listeners(bot))
+
     await dp.start_polling(bot)
 
 
 # запуск бота через long_polling
 if __name__ == "__main__":
-    # обработка исключений try-except
     try:
         asyncio.run(async_create_table())
         asyncio.run(main())

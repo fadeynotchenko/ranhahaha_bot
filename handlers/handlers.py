@@ -144,8 +144,8 @@ async def token_command(message: types.Message):
 
         token = command_parts[1].strip()
 
-        client = YaDiskClient()
-        result = await client.check_token_validity(token=token)
+        client = YaDiskClient(token=token)
+        result = await client.check_token_validity()
 
         if result:
             user.yadisk_token = token

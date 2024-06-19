@@ -1,3 +1,4 @@
+import json
 import logging
 
 from yadisk import YaDisk
@@ -24,14 +25,10 @@ class YaDiskClient:
             logger.error(f"Error checking token: {e}")
             return False
 
-    async def get_latest_modified_time(self, directory_path):
+    async def get_json_of_items_dates_from_yandex_disk(self, directory_path):
         y = YaDisk(token=self.token)
 
-        try:
-            y.get_meta(f"disk:/{directory_path}")
-            logger.info(f"Meta information retrieved for {directory_path}")
-        except YaDiskError as e:
-            logger.error(f"Error checking token: {e}")
+        if not await self.check_token_validity():
             return None
 
         try:
@@ -45,5 +42,6 @@ class YaDiskClient:
             logger.warning("The directory is empty or does not exist.")
             return None
 
-        latest_modified_time = max(item.modified for item in items)
-        return latest_modified_time.isoformat() if latest_modified_time else None
+        modified_times = {f"item_{i}": item.modified.isoformat() for i, item in enumerate(items)}
+
+        return json.dumps(modified_times, ensure_ascii=False)

@@ -1,4 +1,5 @@
 import asyncio
+import json
 
 from aiogram import Bot
 from aiogram.exceptions import TelegramBadRequest
@@ -8,6 +9,22 @@ from db import async_session_maker
 from sqlalchemy import select
 
 from db.models import YandexDiskFolder, User
+
+
+async def check_dates(lhs, rhs):
+    if lhs is None and rhs is None:
+        return True
+
+    if lhs is None or rhs is None:
+        return False
+
+    try:
+        lhs_json = json.loads(lhs)
+        rhs_json = json.loads(rhs)
+    except json.JSONDecodeError:
+        return False
+
+    return lhs_json == rhs_json
 
 
 async def notificate_users(users, folder, bot: Bot):
@@ -20,7 +37,7 @@ async def notificate_users(users, folder, bot: Bot):
 
 
 async def notificate_listeners(bot):
-    sleep_time = 60 * 30
+    sleep_time = 20
 
     while True:
         logger.info("Waking up to check for updates")
@@ -35,19 +52,21 @@ async def notificate_listeners(bot):
                 teacher = await session.get(User, folder.teacher_id)
 
                 client = YaDiskClient(token=teacher.yadisk_token)
-                date = await client.get_latest_modified_time(folder.path)
+                new_dates = await client.get_json_of_items_dates_from_yandex_disk(folder.path)
 
-                logger.info(f"Last modified time for {folder.path} - {date}")
+                if not await check_dates(new_dates, folder.dates):
+                    folder.dates = new_dates
 
-                if date and date != folder.last_date_update and date is not None:
-                    folder.last_date_update = date
                     await session.commit()
 
-                    stmt = select(User).filter(User.teacher_id is folder.teacher_id)
-                    result = await session.execute(stmt)
-                    listeners = result.scalars()
+                    stmt = select(User).filter(
+                        User.teacher_id == folder.teacher_id
+                    )
 
-                    await notificate_users(listeners, folder.path, bot)
+                    result = await session.execute(stmt)
+                    users = result.scalars().all()
+
+                    await notificate_users(users, folder.path, bot)
 
             await session.close()
 

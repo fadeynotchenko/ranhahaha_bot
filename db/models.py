@@ -1,6 +1,6 @@
 # __all__ - публичный список объектов
 # https://ru.stackoverflow.com/questions/27983/%D0%A7%D1%82%D0%BE-%D1%82%D0%B0%D0%BA%D0%BE%D0%B5-all-%D0%B2-python
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, JSON
 from sqlalchemy.orm import DeclarativeBase
 
 
@@ -29,4 +29,4 @@ class YandexDiskFolder(Base):
 
     path = Column(String)
 
-    last_date_update = Column(String, nullable=True)
+    dates = Column(JSON, nullable=True)
